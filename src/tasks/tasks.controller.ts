@@ -19,7 +19,7 @@ export class TasksController {
         status:200,
         type:Task,
     })
-    @Post()
+    @Post('*/')
     CreateTask(@Body() taskDto:CreateTaskDto){
         try {
             if (!taskDto){
@@ -40,22 +40,10 @@ export class TasksController {
         status:200,
         type:[Task]
     })
-    @Get(':Tab')
-    getAllTask(@Param('Tab') Tab:ETab){
-        return this.TasksService.getAllTask(Tab)
-    }
-
-
-    @ApiOperation({
-        summary:'Get all Task'
-    })
-    @ApiResponse({
-        status:200,
-        type:[Task]
-    })
-    @Get(`*/:id`)
-    getOneTask(@Param('id') id:string){
-        return this.TasksService.getOneTask(+id)
+    @Get(':Tab/:numberPage')
+    getAllTask(@Param('Tab') Tab:ETab, @Param('numberPage') numberPage:number){
+        console.log(numberPage)
+        return this.TasksService.getAllTask(Tab, numberPage)
     }
 
 
@@ -93,20 +81,20 @@ export class TasksController {
         type:String
 })
     @Patch('*/:id')
-    update(@Param('id') id: string, @Body('status') status?:string,@Body('text') text?:string){
+    update(@Param('id') id: string, @Body('status') status?:boolean,@Body('text') text?:string){
         try{
             console.log(text)
-            console.log(status)
+            console.log(typeof status)
             if(text !== undefined){  
                 this.TasksService.updateText(text, Number(id))
             }
             if(status !== undefined){
                 this.TasksService.updateStatus(status, Number(id))//возможен косяк из-за прокидывания строки (исправил без пайпов)
             }
-            return 'update Successful'
+            return {message:'Update Successful'}
         }
         catch(e){
-            return e.message
+            return e
         }
     }
 
@@ -126,7 +114,7 @@ export class TasksController {
         type:String
 })
     @Patch('*/')
-    updateAllStatus(@Body( 'status') status:string){
+    updateAllStatus(@Body( 'status') status:boolean){
         return this.TasksService.updateStatus(status)
     }
 }

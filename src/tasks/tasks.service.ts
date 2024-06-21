@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Task } from './tasks.model';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { ETab } from './tasks.enums';
-
+import { ETab, countElementOnPage } from './tasks.enums';
+import { count } from 'console';
 @Injectable()
 export class TasksService {
 
@@ -14,34 +14,69 @@ export class TasksService {
         return task
     }
 
-    async getAllTask(Tab:ETab){
+    async getAllTask(Tab:ETab,numberPage:number){
 
         let tasks = null
-
+        const tasksAll = await this.TaskRepository.findAll()
+        const tasksTrue = tasks = await this.TaskRepository.findAll({
+            where:{
+                status:true
+            }
+        })
         switch (Tab){
             case ETab.All:
-                tasks = await this.TaskRepository.findAll()
+                tasks = await this.TaskRepository.findAll({
+                    order: [['createdAt','ASC']],
+                })
                 break;
             case ETab.Active:
                 tasks = await this.TaskRepository.findAll({
                     where:{
                         status:false
-                    }
+                    },
+                    order: [['createdAt','ASC']],
                 })
                 break;
             case ETab.Completed:
                 tasks = await this.TaskRepository.findAll({
                     where:{
                         status:true
-                    }
+                    },
+                    order: [['createdAt','ASC']],
                 })
                 break;
             default:
                 check(Tab)
                 break;
         }
-        
-        return tasks
+        let EditTasks = tasks.map((item,index) => {
+            const ObjTask:{
+                id:number,
+                index:number,
+                text:string,
+                status:boolean,
+            } = {
+                id:item.id,
+                index:index+1,
+                text:item.text,
+                status:item.status,
+            }
+            return ObjTask
+        })
+        const countPage = Math.floor(EditTasks.length/countElementOnPage)===0? 1:Math.ceil(EditTasks.length/countElementOnPage)
+        numberPage = numberPage>countPage? countPage:numberPage;
+        EditTasks = EditTasks.slice((numberPage-1)*countElementOnPage, ((numberPage-1)*countElementOnPage+countElementOnPage))
+        return {
+            tasks:EditTasks,
+            statusCheckbox:(tasksTrue.length===tasksAll.length),
+            countPage:countPage,
+            len:{
+                AllTask:tasksAll.length,
+                ActiveTask:(tasksAll.length-tasksTrue.length),
+                CompletedTask:tasksTrue.length,
+            },
+            ActivePage: numberPage,
+        }
     }
 
 
@@ -66,21 +101,21 @@ export class TasksService {
     }
 
 
-    async updateStatus(status:string, id?:number, ){
+    async updateStatus(status:boolean, id?:number, ){
         try{
-            let BoolStatus = false
-            if (status === 'true'||'True'||'TRUE'){
-                BoolStatus = true
-            }
+            // let BoolStatus = false
+            // if (status === 'true'){
+            //     BoolStatus = true
+            // }
             let updatedTask = null
             if ((id !== undefined)){
-                updatedTask = await this.TaskRepository.update({ status: BoolStatus },{
+                updatedTask = await this.TaskRepository.update({ status: status },{
                     where:{
                         id:id
                     }
                 })
             }else{
-                updatedTask = await this.TaskRepository.update({ status: BoolStatus },{where:{
+                updatedTask = await this.TaskRepository.update({ status: status },{where:{
                     status:!status
                 }})
             }

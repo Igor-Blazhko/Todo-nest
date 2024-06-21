@@ -5,3 +5,5 @@ export enum ETab {
     Completed = 'Completed',
     Active = 'Active',
 }
+
+export const countElementOnPage = 5

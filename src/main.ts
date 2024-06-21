@@ -17,6 +17,15 @@ async function start() {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('/documentation',app, document)
 
+  app.enableCors();
+
+  // Включение CORS с кастомными настройками
+  app.enableCors({
+    origin: '*', // разрешить только этот источник
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
+  });
+
   await app.listen(PORT,()=>{
     console.log(`PORT: ${PORT}`)
     console.log(`USER: ${process.env.POSTGRES_USERNAME}`)
